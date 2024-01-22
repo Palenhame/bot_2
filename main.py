@@ -8,7 +8,9 @@ from random import choice
 load_dotenv()
 token = getenv('TOKEN')
 bot = telebot.TeleBot(token=token)
-counter = 1
+
+
+# counter = 1
 
 
 def main():
@@ -27,8 +29,10 @@ def start(message):
     # preface(message)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = make_button('/continue_preface🏁')
-    markup.row(btn1)
-    bot.send_message(message.chat.id, 'Чтобы начать квест напишите команду "/continue_preface🏁"',
+    btn2 = make_button('/rules🏁')
+    markup.row(btn1, btn2)
+    bot.send_message(message.chat.id, 'Чтобы начать квест напишите команду "/continue_preface🏁"\n'
+                                      'Чтобы посмотреть, как проходить квест напишите команду "/rules🏁"',
                      reply_markup=markup)
 
 
@@ -39,6 +43,7 @@ def register(message):
         data[str(message.chat.id)] = {
             'user_name': '{0.first_name}'.format(message.from_user),
             'registered': True,
+            'counter': 1,
             'preface': False,
             '1_level': False,
             '2_level': [False, ''],
@@ -79,9 +84,9 @@ def make_button(dicts):
 @bot.message_handler(commands=['continue_preface🏁', 'continue_preface'])
 def preface(message):
     if register(message):
-        global counter
         data = load_data('database1')
         datas = load_data('database')
+        counter = datas[str(message.chat.id)]['counter']
         try:
             with open(data['preface'][str(counter)][1], 'rb') as img:
                 bot.send_photo(message.chat.id, img)
@@ -93,12 +98,15 @@ def preface(message):
         bot.send_message(message.chat.id, data['preface'][str(counter)][0],
                          reply_markup=markup)
         counter += 1
-        if counter >= len(data['preface']) + 1:
+        datas[str(message.chat.id)]['counter'] = counter
+        change_data(datas, 'database')
+        if datas[str(message.chat.id)]['counter'] >= len(data['preface']) + 1:
             counter = 1
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
             btn1 = make_button('/continue_1_level🏁')
             markup.row(btn1)
             datas[str(message.chat.id)]['preface'] = True
+            datas[str(message.chat.id)]['counter'] = counter
             change_data(datas, 'database')
             bot.send_message(message.chat.id, 'Чтобы начать 1 уровень напишите команду "/continue_1_level🏁"',
                              reply_markup=markup)
@@ -116,8 +124,8 @@ def level_1(message):
     if register(message):
         data = load_data('database1')
         datas = load_data('database')
+        counter = datas[str(message.chat.id)]['counter']
         if datas[str(message.chat.id)]['preface']:
-            global counter
             print(counter)
             try:
                 with open(choice(data['1_level'][str(counter)][1]), 'rb') as img:
@@ -134,6 +142,8 @@ def level_1(message):
                 bot.send_message(message.chat.id, data['1_level'][str(counter)][0],
                                  reply_markup=markup)
                 counter = 1
+                datas[str(message.chat.id)]['counter'] = counter
+                change_data(datas, 'database')
 
             else:
                 btn1 = make_button('/continue_1_level🏁')
@@ -141,6 +151,8 @@ def level_1(message):
                 bot.send_message(message.chat.id, data['1_level'][str(counter)][0],
                                  reply_markup=markup)
                 counter += 1
+                datas[str(message.chat.id)]['counter'] = counter
+                change_data(datas, 'database')
         else:
             bot.send_message(message.chat.id, 'Пройдите предыдущие уровни',
                              reply_markup=types.ReplyKeyboardRemove())
@@ -157,8 +169,8 @@ def underwater_city(message):
     if register(message):
         data = load_data('database1')
         datas = load_data('database')
+        counter = datas[str(message.chat.id)]['counter']
         if datas[str(message.chat.id)]['1_level']:
-            global counter
             print(counter)
             try:
                 with open(data['underwater_city'][str(counter)][1], 'rb') as img:
@@ -173,16 +185,19 @@ def underwater_city(message):
                 bot.send_message(message.chat.id, data['underwater_city'][str(counter)][0],
                                  reply_markup=markup)
                 counter = 1
+                datas[str(message.chat.id)]['counter'] = counter
+                datas[str(message.chat.id)]['2_level'][0] = True
+                datas[str(message.chat.id)]['2_level'][1] = 'underwater_city'
+                change_data(datas, 'database')
             else:
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
                 btn1 = make_button('/continue_underwater_city🏁')
                 markup.row(btn1)
-                datas[str(message.chat.id)]['2_level'][0] = True
-                datas[str(message.chat.id)]['2_level'][1] = 'underwater_city'
-                change_data(datas, 'database')
                 bot.send_message(message.chat.id, data['underwater_city'][str(counter)][0],
                                  reply_markup=markup)
                 counter += 1
+                datas[str(message.chat.id)]['counter'] = counter
+                change_data(datas, 'database')
         else:
             bot.send_message(message.chat.id, 'Пройдите предыдущие уровни',
                              reply_markup=types.ReplyKeyboardRemove())
@@ -199,25 +214,27 @@ def abandoned_mine(message):
     if register(message):
         data = load_data('database1')
         datas = load_data('database')
+        counter = datas[str(message.chat.id)]['counter']
         if datas[str(message.chat.id)]['2_level']:
-            global counter
             print(counter)
             try:
                 with open(data['abandoned_mine'][str(counter)][1], 'rb') as img:
                     bot.send_photo(message.chat.id, img)
             except Exception as error:
                 print(str(error) + ' abandoned_mine')
-            if counter >= len(data['abandoned_mine']):
+            if datas[str(message.chat.id)]['counter'] >= len(data['abandoned_mine']):
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
                 btn1 = make_button('/continue_city_edge_world🏁')
                 btn2 = make_button('/continue_lost_city🏁')
                 markup.row(btn1, btn2)
+                counter = 1
+                datas[str(message.chat.id)]['counter'] = counter
                 datas[str(message.chat.id)]['2_level'][0] = True
                 datas[str(message.chat.id)]['2_level'][1] = 'abandoned_mine'
                 change_data(datas, 'database')
                 bot.send_message(message.chat.id, data['abandoned_mine'][str(counter)][0],
                                  reply_markup=markup)
-                counter = 1
+
             else:
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
                 btn1 = make_button('/continue_abandoned_mine🏁')
@@ -225,6 +242,8 @@ def abandoned_mine(message):
                 bot.send_message(message.chat.id, data['abandoned_mine'][str(counter)][0],
                                  reply_markup=markup)
                 counter += 1
+                datas[str(message.chat.id)]['counter'] = counter
+                change_data(datas, 'database')
         else:
             bot.send_message(message.chat.id, 'Пройдите предыдущие уровни',
                              reply_markup=types.ReplyKeyboardRemove())
@@ -299,6 +318,13 @@ def win(message):
     except:
         pass
     bot.send_message(message.chat.id, 'You win!!!!!!!!!!', reply_markup=types.ReplyKeyboardRemove())
+
+
+@bot.message_handler(commands=['rules', 'rules🏁'])
+def rules(message):
+    bot.send_message(message.chat.id, 'Суть игры в том чтобы выбирать '
+                                      'локации которые вы освободите от враждебной '
+                                      'рассы.')
 
 
 if __name__ == "__main__":
