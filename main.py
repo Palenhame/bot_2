@@ -340,7 +340,7 @@ def rules(message):
 
 @bot.message_handler(commands=['restart', 'restart🏁'])
 def restart(message):
-    data = load_data('database.json')
+    data = load_data('database')
     data[str(message.chat.id)] = {
             'user_name': '{0.first_name}'.format(message.from_user),
             'registered': True,
