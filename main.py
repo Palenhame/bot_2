@@ -22,7 +22,8 @@ def start(message):
     # data = load_data()
     bot.send_message(message.chat.id,
                      text="Привет, {0.first_name}! "
-                          "Я тестовый Iq бот /start_adventure".format(message.from_user))
+                          "Я бот-квест. И я приглашаю тебя в "
+                          "увлекательное приключение.".format(message.from_user))
     q = register(message)
     print(q)
     print(message.text)
@@ -32,11 +33,11 @@ def start(message):
     btn2 = make_button('/rules🏁')
     markup.row(btn1, btn2)
     bot.send_message(message.chat.id, 'Чтобы начать квест напишите команду "/continue_preface🏁"\n'
-                                      'Чтобы посмотреть, как проходить квест напишите команду "/rules🏁"',
+                                      'Чтобы узнать, как проходить квест напишите команду "/rules🏁"',
                      reply_markup=markup)
 
 
-@bot.message_handler(commands=['register'])
+@bot.message_handler(commands=['register', 'register🏁'])
 def register(message):
     if str(message.chat.id) not in load_data('database'):
         data = load_data('database')
@@ -296,7 +297,7 @@ def another(message):
                              reply_markup=types.ReplyKeyboardRemove())
     else:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = make_button('/register')
+        btn1 = make_button('/register🏁')
         markup.row(btn1)
         bot.send_message(message.chat.id, 'Пройдите регистрацию написав команду "/register"',
                          reply_markup=markup)
@@ -309,6 +310,11 @@ def lose(message):
     except:
         pass
     bot.send_message(message.chat.id, 'You lose!!!!!!!!!!', reply_markup=types.ReplyKeyboardRemove())
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = make_button('/restart🏁')
+    markup.row(btn1)
+    bot.send_message(message.chat.id, 'Вы можете начать с начала написав команду "/restart🏁"',
+                     reply_markup=markup)
 
 
 def win(message):
@@ -318,6 +324,11 @@ def win(message):
     except:
         pass
     bot.send_message(message.chat.id, 'You win!!!!!!!!!!', reply_markup=types.ReplyKeyboardRemove())
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = make_button('/restart🏁')
+    markup.row(btn1)
+    bot.send_message(message.chat.id, 'Вы можете начать с начала написав команду "/restart🏁"',
+                     reply_markup=markup)
 
 
 @bot.message_handler(commands=['rules', 'rules🏁'])
@@ -325,6 +336,21 @@ def rules(message):
     bot.send_message(message.chat.id, 'Суть игры в том чтобы выбирать '
                                       'локации которые вы освободите от враждебной '
                                       'рассы.')
+
+
+@bot.message_handler(commands=['restart', 'restart🏁'])
+def restart(message):
+    data = load_data('database.json')
+    data[str(message.chat.id)] = {
+            'user_name': '{0.first_name}'.format(message.from_user),
+            'registered': True,
+            'counter': 1,
+            'preface': False,
+            '1_level': False,
+            '2_level': [False, ''],
+            '3_level': False,
+        }
+    bot.send_message(message.chat.id, 'Вы удалили весь прогресс.', reply_markup=types.ReplyKeyboardRemove())
 
 
 if __name__ == "__main__":
