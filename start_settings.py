@@ -1,4 +1,4 @@
-from bot_2.main import change_data
+from main import change_data
 
 
 def main(function) -> None:
